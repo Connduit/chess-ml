@@ -12,25 +12,69 @@ Other:
     https://python-chess.readthedocs.io/en/latest/
 
 """
+import os
+import random
 import chess
 import chess.engine
-import os
-import asyncio
+import chess.svg
+import chess.pgn
+#import asyncio
+
+
+def my_engine(board):
+    move = random.choice(list(board.legal_moves))
+    #print(type(uci_move))
+    #move = chess.Move.from_uci(uci_move)
+    board.push(move)
+    return None
+
+def main():
+    engine = chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/stockfish_14.1_win_x64_avx2.exe")
+    board = chess.Board()
+    """
+    chess.WHITE = True
+    chess.BLACK = False
+    """
+    while not board.is_game_over():
+        if board.turn == chess.WHITE:
+            my_engine(board)
+        elif board.turn == chess.BLACK:
+            result = engine.play(board, chess.engine.Limit(time=0.1))
+            board.push(result.move)
+            #my_engine(board)
+        print(board)
+        print()
+
+    engine.quit()
+    
+    print(board.outcome())
+    # TODO: make this pgn stuff its own class/method
+    game = chess.pgn.Game()
+    game = game.from_board(board)
+    print(game)
+
+    
 
 
 
 
-async def main():
 
-    transport, engine = await chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/stockfish_14.1_win_x64_avx2.exe")
+
+
+    """
+    engine = chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/stockfish_14.1_win_x64_avx2.exe")
     board = chess.Board()
 
     while not board.is_game_over():
-        result = await engine.play(board, chess.engine.Limit(time=0.1))
+        result = engine.play(board, chess.engine.Limit(time=0.1))
         board.push(result.move)
-    
-    await engine.quit()
 
-asyncio.set_event_loop_policy(chess.engine.EventLoopPolicy())
-asyncio.run(main())
-#main()
+        #print(board)
+    
+    engine.quit()
+    """
+
+#asyncio.set_event_loop_policy(chess.engine.EventLoopPolicy())
+#asyncio.run(main())
+if __name__ == "__main__":
+    main()
