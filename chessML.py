@@ -14,11 +14,19 @@ Other:
 """
 import os
 import random
+import argparse
 import chess
 import chess.engine
-import chess.svg
 import chess.pgn
+#import chess.svg
 #import asyncio
+
+def cli():
+    arg_parser = argparse.ArgumentParser(description="Plays Chess Against Chess Engine")
+    arg_parser.add_argument("-e", "--enginename", required=True, help="Chess Engine Name")
+    #args = arg_parser.parse_args()
+    return arg_parser
+
 
 
 def my_engine(board):
@@ -29,7 +37,16 @@ def my_engine(board):
     return None
 
 def main():
-    engine = chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/stockfish_14.1_win_x64_avx2.exe")
+
+    args = cli()
+    enginename = vars(args.parse_args())["enginename"]
+    if not os.path.exists(enginename):
+        print("Not a valid file or path to file")
+        args.print_usage()
+        exit()
+
+
+    engine = chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/{enginename}")
     board = chess.Board()
     """
     chess.WHITE = True
@@ -58,21 +75,6 @@ def main():
 
 
 
-
-
-
-    """
-    engine = chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/stockfish_14.1_win_x64_avx2.exe")
-    board = chess.Board()
-
-    while not board.is_game_over():
-        result = engine.play(board, chess.engine.Limit(time=0.1))
-        board.push(result.move)
-
-        #print(board)
-    
-    engine.quit()
-    """
 
 #asyncio.set_event_loop_policy(chess.engine.EventLoopPolicy())
 #asyncio.run(main())
