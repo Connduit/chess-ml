@@ -15,7 +15,11 @@ Other:
     TENSORFLOW
     PYTORCH
 
+
+TODO: it seems the engine is making the same opening moves everytime
+
 """
+from asce import Asce
 import os
 import random
 import argparse
@@ -28,73 +32,6 @@ def cli():
     arg_parser = argparse.ArgumentParser(description="Plays Chess Against Chess Engine")
     arg_parser.add_argument("-e", "--enginename", required=True, help="Chess Engine Name")
     return arg_parser
-
-
-# A Simple Chess Engine
-class Asce:
-    def __init__(self, board: chess.Board, color: chess.Color):
-        self.board = board
-        self.color = color
-        self.material = 0
-
-
-    def evaluate(self):
-        #self.board.pieces()
-        mat = 0
-        d = self.board.piece_map()
-        for k,v in d.items():
-            #print(f"key = {k}, value = {v}")
-            #self.material += self.count(v)
-            mat += self.count(v)
-        #return self.material
-        return mat
-
-    def count(self, piece: chess.Piece):
-        val = 0
-        if piece.piece_type == chess.PAWN:
-            val += 1
-        elif piece.piece_type == chess.KNIGHT:
-            val += 3
-        elif piece.piece_type == chess.BISHOP:
-            val += 3
-        elif piece.piece_type == chess.ROOK:
-            val += 5
-        elif piece.piece_type == chess.QUEEN:
-            val += 9
-        elif piece.piece_type == chess.KING:
-            val += 0
-
-        if piece.color:
-            return val
-        else:
-            return -1 * val
-
-    def search(self, depth):
-        if depth == 0:
-            return self.evaluate()
-
-        best_eval = float("-inf")
-        best_move = "temp move"
-        #print(self.board.turn)
-        for move in self.board.legal_moves:
-            #make move
-            self.board.push(move)
-            new_eval = self.search(depth - 1)
-            if new_eval > best_eval:
-                best_move = move
-                best_eval = new_eval
-            
-            #best_eval = max(best_eval, new_eval)
-            # unmake move
-            self.board.pop()
-        
-        if depth == 3:
-            #print(best_move)
-            return best_move
-        return best_eval
-
-
-
 
 
 
@@ -146,16 +83,19 @@ def main():
     if True:
         display.start(board.fen())
 
-    """
-    chess.WHITE = True
-    chess.BLACK = False
-    """
-    e = Asce(board, chess.WHITE)
+    
+    
+    e = Asce(board, 3)
 
     while not board.is_game_over():
         if board.turn == chess.WHITE:
             #my_engine(board)
             b_move = e.search(3)
+            if b_move == "temp move":
+                break
+            #print(b_move)
+            #print(board.turn)
+            #print(len(list(board.legal_moves)))
             board.push(b_move)
         elif board.turn == chess.BLACK:
             if h:
@@ -178,6 +118,7 @@ def main():
     print(game)
 
     if True:
+        input()
         display.terminate()
     
 
