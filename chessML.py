@@ -31,6 +31,8 @@ from chessboard import display
 def cli():
     arg_parser = argparse.ArgumentParser(description="Plays Chess Against Chess Engine")
     arg_parser.add_argument("-e", "--enginename", required=True, help="Chess Engine Name")
+    arg_parser.add_argument("-v", "--visual", action="store_true", help="Board UI")
+    arg_parser.add_argument("-d", "--depth", type=int, default=3, help="Search Depth")
     return arg_parser
 
 
@@ -68,6 +70,8 @@ def main():
 
     args = cli()
     enginename = vars(args.parse_args())["enginename"]
+    visual = vars(args.parse_args())["visual"]
+    depth = vars(args.parse_args())["depth"]
 
     h = False
     if enginename == "human":
@@ -79,23 +83,18 @@ def main():
     else:
         engine = chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/{enginename}")
 
+    #board = chess.Board()
     board = chess.Board()
-    if True:
+    if visual:
         display.start(board.fen())
 
     
     
-    e = Asce(board, 3)
+    e = Asce(board, depth)
 
     while not board.is_game_over():
         if board.turn == chess.WHITE:
-            #my_engine(board)
-            #b_move = e.search(3)
-            b_move = e.alphaBeta(board, 3, -99999, 99999, True)[0]
-            #print(e.e(e.board))
-            #print(b_move)
-            #print(board.turn)
-            #print(len(list(board.legal_moves)))
+            b_move = e.alphaBeta(board, depth, -99999, 99999, True)[0]
             board.push(b_move)
         elif board.turn == chess.BLACK:
             if h:
@@ -103,11 +102,8 @@ def main():
             else:
                 result = engine.play(board, chess.engine.Limit(time=0.1))
                 board.push(result.move)
-            #my_engine(board)
-        if True:
+        if visual:
             display.update(board.fen())
-        #print(board)
-        #print()
 
     if not h:
         engine.quit()
@@ -117,7 +113,7 @@ def main():
     game = game.from_board(board)
     print(game)
 
-    if True:
+    if visual:
         input()
         display.terminate()
     
@@ -127,7 +123,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #b = chess.Board("r3kb1r/ppp1pppp/2n2n2/4q3/8/4Q1P1/PPPPbPBP/RNB1K2R w KQkq - 0 8")
+    """
     b = chess.Board()
     #print(b.turn)
     #print(random_move(b))
@@ -144,3 +140,4 @@ if __name__ == "__main__":
 
     print(eng.search(3))
     #main()
+    """
