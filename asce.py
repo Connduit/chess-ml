@@ -8,6 +8,59 @@ class Asce:
         self.depth = depth
         self.material = 0
 
+    def alphaBeta(self, board: chess.Board, depth, alpha, beta, maximize):
+        if board.is_checkmate():
+            if board.turn:
+                # if it's white's turn
+                return None,-10000
+            else:
+                return None, 10000
+        if depth == 0:
+            return None, self.e(board)
+
+        if maximize:
+            max_val = -999999
+            for move in board.legal_moves:
+                board.push(move)
+                current =  self.alphaBeta(board, depth-1, alpha, beta, (not maximize))[1]
+                board.pop()
+                if current > max_val:
+                    max_val = current
+                    best_move = move
+                alpha = max(alpha, current)
+                if alpha >= beta:
+                    break
+                    #return bestVal
+            return best_move, max_val
+        else:
+            min_val = 999999
+            for move in board.legal_moves:
+                board.push(move)
+                curr = self.alphaBeta(board, depth-1, alpha, beta, (not maximize))[1]
+                board.pop()
+                if curr < min_val:
+                    min_val = curr
+                    best_move = move
+                beta = min(beta, curr)
+                if beta <= alpha: 
+                    break
+                    #return bestVal
+            return best_move, min_val
+
+
+    def e(self, board: chess.Board):
+        material = 0
+        board_pieces = board.piece_map()
+        for piece in board_pieces.values():
+            material += self.count(piece)
+        
+        """ #state = 0
+        if board.turn:
+            state += 1
+        else:
+            state -= 1
+        """
+        return material #* state
 
     def evaluate(self):
         material = 0

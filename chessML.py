@@ -90,9 +90,9 @@ def main():
     while not board.is_game_over():
         if board.turn == chess.WHITE:
             #my_engine(board)
-            b_move = e.search(3)
-            if b_move == "temp move":
-                break
+            #b_move = e.search(3)
+            b_move = e.alphaBeta(board, 3, -99999, 99999, True)[0]
+            #print(e.e(e.board))
             #print(b_move)
             #print(board.turn)
             #print(len(list(board.legal_moves)))
