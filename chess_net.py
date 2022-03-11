@@ -15,8 +15,10 @@ warnings.filterwarnings("ignore")
 class ChessDataset(Dataset):
     def __init__(self, path):
         data = np.load(path)
-        self.board_state = data["board_state"]
-        self.board_eval = data["board_eval"]
+        #self.board_state = data["board_state"]
+        #self.board_eval = data["board_eval"]
+        self.board_state = data["b"]
+        self.board_eval = data["v"]
 
     def __len__(self):
         return self.board_state.shape[0]
@@ -124,7 +126,7 @@ class CNN(nn.Module):
 
 #def train(net, dataset/path, epoch, criterion, optimizer, scheduler /decay?, lr=0.001):
 #def train(net: nn.Module, path, number_of_samples, nepochs, lr=0.001):
-def train(path, saveas, nepochs, lr=0.001):
+def train(path, saveas, nepochs, lr=0.003):
     #torch.manual_seed(var)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #dataset = ChessDataset()
@@ -135,7 +137,7 @@ def train(path, saveas, nepochs, lr=0.001):
 
     #train_data = 
     #train_loader = DataLoader(train_set, batch_size=30, shuffle=True)
-    train_loader = DataLoader(train_set, batch_size=256, shuffle=True)
+    train_loader = DataLoader(train_set, batch_size=2048, shuffle=True)
 
     model = CNN()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -143,6 +145,7 @@ def train(path, saveas, nepochs, lr=0.001):
     lossfunction = nn.MSELoss()
 
     model = model.to(device)
+    model.train()
 
 
 
