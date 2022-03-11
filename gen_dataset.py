@@ -1,25 +1,29 @@
+# this should be the encoder.py or pgn_reader.py file
+
 import os
 import chess
 import chess.pgn
 import chess.engine
 import numpy as np
-import encoder
-import timeit
+from encoder import encode_board
 
 
 
 
-def generate_dataset(num_samples, path = None):
+#def generate_dataset(num_samples, path = None):
+def generate_dataset(path, num_board_states = None, num_games = None):
     X,Y = [], []
     gn = 0
     values = {'1/2-1/2':0, '0-1':-1, '1-0':1}
     # pgn files in the data folder
-    if path is None:
-        for fn in os.listdir("data"):
+    if os.path.isdir(path):
+    #if path is None:
+        #for fn in os.listdir("data"):
+        for fn in os.listdir(path):
             if os.path.splitext(fn)[1] != ".pgn":
                 continue
-            pgn = open(os.path.join("data", fn))
-            while 1:
+            pgn = open(os.path.join(path, fn))
+            while True:
                 game = chess.pgn.read_game(pgn)
                 if game is None:
                     break
@@ -31,7 +35,7 @@ def generate_dataset(num_samples, path = None):
                 for i, move in enumerate(game.mainline_moves()):
                     board.push(move)
                     #ser = State(board).serialize()
-                    ser = encoder.encode_board(board)
+                    ser = encode_board(board)
                     X.append(ser)
                     Y.append(value)
                 #print("parsing game %d, got %d examples" % (gn, len(X)))
@@ -54,10 +58,10 @@ def generate_dataset(num_samples, path = None):
             board = game.board()
             for _, move in enumerate(game.mainline_moves()):
                 board.push(move)
-                ser = encoder.encode_board(board)
+                ser = encode_board(board)
                 X.append(ser)
                 #start = timeit.default_timer()
-                val = stockfish(board, 10)
+                val = evaluator(board, 10)
                 #stop = timeit.default_timer()
                 #t = stop - start
                 #print(round(t, 5))
@@ -70,10 +74,7 @@ def generate_dataset(num_samples, path = None):
         return X,Y
 
 
-#def stockfish(path, board, depth):
-def stockfish(board, depth):
-    #with chess.engine.SimpleEngine.popen_uci(path) as sf:
-    enginename = "stockfish_14.1_win_x64_avx2.exe"
+def evaluator(board, depth, enginename="stockfish_14.1_win_x64_avx2.exe"):
     with chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/{enginename}") as sf:
         result = sf.analyse(board, chess.engine.Limit(depth=depth))
         score = result["score"].white().score()

@@ -3,7 +3,7 @@ import chess
 import chess.engine
 import chess.pgn
 import numpy as np
-import encoder_decoder
+import encoder
 from chess_net import CNN
 import torch
 
@@ -11,7 +11,7 @@ import torch
 
 def minimax_eval(board, model):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    board3d = encoder_decoder.encode_board(board)
+    board3d = encoder.encode_board(board)
     #print(board3d)
     board3d = np.expand_dims(board3d, 0)
     board3d = torch.from_numpy(board3d)
@@ -22,6 +22,10 @@ def minimax_eval(board, model):
     #print("=======================================================")
     #print("=======================================================")
     #print(board3d)
+    output = model(board3d)
+    #print(float(output.data[0][0]))
+    #print(model(board3d)[0][0])
+    return float(output.data[0][0])
     return model(board3d)
     return model.predict(board3d)[0][0]
 
@@ -74,7 +78,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     board = chess.Board()
     model = CNN()
-    model.load_state_dict(torch.load(f"{os.getcwd()}/nets/my_values.pth"))
+    #model.load_state_dict(torch.load(f"{os.getcwd()}/nets/my_values_25k.pth"))
+    model.load_state_dict(torch.load(f"{os.getcwd()}/nets/alpha1-5M.pth"))
     model.eval()
     model = model.to(device)
 
@@ -82,7 +87,7 @@ def main():
     with chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/{enginename}") as sf:
         sf.configure({"Skill Level": 3})
         while True:
-            move = get_ai_move(board, 3, model)
+            move = get_ai_move(board, 2, model)
             #move = get_ai_move(board, 1)
             board.push(move)
             #print(board)
