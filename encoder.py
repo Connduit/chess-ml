@@ -24,8 +24,6 @@ def unravel_index(indices, shape):
 
 
 def encode_board(board: chess.Board):
-    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #board3d = torch.zeros(14, 8, 8, dtype=torch.uint8, device=device)
     #board3d = torch.zeros(14, 8, 8, dtype=torch.uint8)
     board3d = np.zeros((14, 8, 8), dtype=np.uint8)
 
@@ -51,7 +49,6 @@ def encode_board(board: chess.Board):
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece is not None:
-            # ind is always correct
             ind = piece.piece_type - 1 + (0 if piece.color else 6)
             #ind = piece.piece_type - 1 + (6 if piece.color else 0)
             #board3d[ind][square // 8][square % 8] = 1
@@ -68,7 +65,7 @@ def encode_board(board: chess.Board):
     board3d[13] = attacked_squares(board, chess.BLACK)
 
     return torch.from_numpy(board3d)
-    return board3d
+    #return board3d
 
 
 def attacked_squares(board: chess.Board, color: chess.Color):

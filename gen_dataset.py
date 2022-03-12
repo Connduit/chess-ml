@@ -1,90 +1,63 @@
-# this should be the encoder.py or pgn_reader.py file
-
+from encoder import encode_board
 import os
 import chess
 import chess.pgn
 import chess.engine
 import numpy as np
-from encoder import encode_board
+import argparse
 
-
-
+def cli():
+    arg_parser = argparse.ArgumentParser(description="Builds a Dataset from a .PGN File")
+    arg_parser.add_argument("-l", "--load_path", required=True, help=".PGN File Location")
+    arg_parser.add_argument("-s", "--store_path", required=True, help="Save Location")
+    arg_parser.add_argument("-d", "--depth", type=int, default=5, help="Search Depth")
+    #arg_parser.add_argument("-ns", "--num_samples", type=int, default=None, help="")
+    #arg_parser.add_argument("-ng", "--num_games", type=int, default=None, help="")
+    return arg_parser
 
 #def generate_dataset(num_samples, path = None):
-def generate_dataset(path, num_board_states = None, num_games = None):
-    X,Y = [], []
+def generate_dataset(path, depth, num_board_states = None, num_games = None):
+    board_states, board_evals = [], []
     gn = 0
     values = {'1/2-1/2':0, '0-1':-1, '1-0':1}
-    # pgn files in the data folder
-    if os.path.isdir(path):
-    #if path is None:
-        #for fn in os.listdir("data"):
-        for fn in os.listdir(path):
-            if os.path.splitext(fn)[1] != ".pgn":
-                continue
-            pgn = open(os.path.join(path, fn))
-            while True:
-                game = chess.pgn.read_game(pgn)
-                if game is None:
-                    break
-                res = game.headers['Result']
-                if res not in values:
-                    continue
-                value = values[res]
-                board = game.board()
-                for i, move in enumerate(game.mainline_moves()):
-                    board.push(move)
-                    #ser = State(board).serialize()
-                    ser = encode_board(board)
-                    X.append(ser)
-                    Y.append(value)
-                #print("parsing game %d, got %d examples" % (gn, len(X)))
-                if num_samples is not None and len(X) > num_samples:
-                    return X,Y
-                gn += 1
-        X = np.array(X)
-        Y = np.array(Y)
-        return X,Y
-    else:
-        while True:
-            pgn = open(path)
-            game = chess.pgn.read_game(pgn)
-            if game is None:
-                break
-            res = game.headers["Result"]
-            if res not in values:
-                continue
-            value = values[res]
-            board = game.board()
-            for _, move in enumerate(game.mainline_moves()):
-                board.push(move)
-                ser = encode_board(board)
-                X.append(ser)
-                #start = timeit.default_timer()
-                val = evaluator(board, 10)
-                #stop = timeit.default_timer()
-                #t = stop - start
-                #print(round(t, 5))
-                Y.append(val)
-            if num_samples is not None and len(X) > num_samples:
-                return X,Y
-            gn += 1
-        X = np.array(X)
-        Y = np.array(Y)
-        return X,Y
+    pgn = open(path)
+    while True:
+        game = chess.pgn.read_game(pgn)
+        if game is None:
+            break
+        res = game.headers["Result"]
+        if res not in values:
+            continue
+        board = game.board()
+        for _, move in enumerate(game.mainline_moves()):
+            board.push(move)
+            curr_board_state = encode_board(board)
+            board_states.append(curr_board_state)
+            curr_board_eval = evaluator(board, depth)
+            board_evals.append(curr_board_eval)
+        if (num_board_states is not None and len(board_states) > num_board_states) or (num_games is not None and gn > num_games):
+            return board_states, board_evals
+        gn += 1
+    board_states = np.array(board_states)
+    board_evals = np.array(board_evals)
+    pgn.close()
+    return board_states, board_evals
 
 
-def evaluator(board, depth, enginename="stockfish_14.1_win_x64_avx2.exe"):
+def evaluator(board, depth=5, enginename="stockfish_14.1_win_x64_avx2.exe"):
     with chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/{enginename}") as sf:
         result = sf.analyse(board, chess.engine.Limit(depth=depth))
         score = result["score"].white().score()
         return score
 
 def main():
-    board_state, board_eval = generate_dataset(25000)
-    #board_state, board_eval = generate_dataset("data/ficsgamesdb_2010_standard2000_nomovetimes_239004.pgn")
-    np.savez("processed/my_dataset25k.npz", board_state=board_state, board_eval=board_eval)
-    #np.savez("processed/my_dataset_10games.npz", board_state=board_state, board_eval=board_eval)
+    args = cli()
+    data = vars(args.parse_args())["load_path"]
+    processed_data = vars(args.parse_args())["store_path"]
+    depth = vars(args.parse_args())["depth"]
+
+    board_state, board_eval = generate_dataset(data, depth)
+    np.savez(processed_data, board_state=board_state, board_eval=board_eval)
 
 if __name__ == "__main__":
     main()
