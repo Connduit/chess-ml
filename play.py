@@ -6,28 +6,24 @@ import numpy as np
 import encoder
 from chess_net import CNN
 import torch
+import argparse
 
+def cli():
+    arg_parser = argparse.ArgumentParser(description="Trained Model Plays Against Stockfish")
+    arg_parser.add_argument("-l", "--load_path", required=True, help="Model Location")
+    arg_parser.add_argument("-d", "--depth", type=int, default=2, help="Search Depth")
+    return arg_parser
 
 
 def minimax_eval(board, model):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     board3d = encoder.encode_board(board)
-    #print(board3d)
     board3d = np.expand_dims(board3d, 0)
     board3d = torch.from_numpy(board3d)
     board3d = board3d.to(device)
     board3d = board3d.float()
-    #print(board3d)
-    #print("=======================================================")
-    #print("=======================================================")
-    #print("=======================================================")
-    #print(board3d)
     output = model(board3d)
-    #print(float(output.data[0][0]))
-    #print(model(board3d)[0][0])
     return float(output.data[0][0])
-    return model(board3d)
-    return model.predict(board3d)[0][0]
 
 
 def minimax(board, depth, alpha, beta, maximizing_player, model):
@@ -58,7 +54,6 @@ def minimax(board, depth, alpha, beta, maximizing_player, model):
         return min_eval
 
 
-# this is the actual function that gets the move from the neural network
 def get_ai_move(board, depth, model):
     max_move = None
     max_eval = -np.inf
@@ -74,20 +69,19 @@ def get_ai_move(board, depth, model):
     return max_move
 
 
-def main():
+def play_engine(model_path, net_depth, enginename = "stockfish_14.1_win_x64_avx2.exe"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     board = chess.Board()
     model = CNN()
-    #model.load_state_dict(torch.load(f"{os.getcwd()}/nets/my_values_25k.pth"))
-    model.load_state_dict(torch.load(f"{os.getcwd()}/nets/alpha1-5M.pth"))
+    #model.load_state_dict(torch.load(f"{os.getcwd()}/nets/alpha1-5M.pth"))
+    model.load_state_dict(torch.load(model_path))
     model.eval()
     model = model.to(device)
 
-    enginename = "stockfish_14.1_win_x64_avx2.exe"
     with chess.engine.SimpleEngine.popen_uci(f"{os.getcwd()}/{enginename}") as sf:
-        sf.configure({"Skill Level": 3})
+        sf.configure({"Skill Level": 1})
         while True:
-            move = get_ai_move(board, 2, model)
+            move = get_ai_move(board, net_depth, model)
             #move = get_ai_move(board, 1)
             board.push(move)
             #print(board)
@@ -96,9 +90,6 @@ def main():
 
             result = sf.play(board, chess.engine.Limit(time=0.05))
             board.push(result.move)
-            #move = sf.analyse(board, chess.engine.Limit(time=1), info=chess.engine.INFO_PV)['pv'][0]
-            #board.push(move)
-            #print(board)
             if board.is_game_over():
                 break
 
@@ -107,6 +98,7 @@ def main():
     print(g)
 
 if __name__ == "__main__":
-    main()
-    #import torch.multiprocessing as mp
-    #mp.Process
+    args = cli()
+    model_path = vars(args.parse_args())["load_path"]
+    depth = vars(args.parse_args())["depth"]
+    play_engine(model_path, depth)
