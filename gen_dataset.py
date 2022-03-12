@@ -11,8 +11,8 @@ def cli():
     arg_parser.add_argument("-l", "--load_path", required=True, help=".PGN File Location")
     arg_parser.add_argument("-s", "--store_path", required=True, help="Save Location")
     arg_parser.add_argument("-d", "--depth", type=int, default=5, help="Search Depth")
-    #arg_parser.add_argument("-ns", "--num_samples", type=int, default=None, help="")
-    #arg_parser.add_argument("-ng", "--num_games", type=int, default=None, help="")
+    arg_parser.add_argument("-ns", "--num_samples", type=int, default=-1, help="Number of Board States to Process")
+    arg_parser.add_argument("-ng", "--num_games", type=int, default=-1, help="Number of Games to Process")
     return arg_parser
 
 #def generate_dataset(num_samples, path = None):
@@ -35,7 +35,7 @@ def generate_dataset(path, depth, num_board_states = None, num_games = None):
             board_states.append(curr_board_state)
             curr_board_eval = evaluator(board, depth)
             board_evals.append(curr_board_eval)
-        if (num_board_states is not None and len(board_states) > num_board_states) or (num_games is not None and gn > num_games):
+        if (num_board_states != -1 and len(board_states) > num_board_states) or (num_games != -1 and gn > num_games):
             return board_states, board_evals
         gn += 1
     board_states = np.array(board_states)
@@ -55,8 +55,10 @@ def main():
     data = vars(args.parse_args())["load_path"]
     processed_data = vars(args.parse_args())["store_path"]
     depth = vars(args.parse_args())["depth"]
+    num_samples = vars(args.parse_args())["num_samples"]
+    num_games = vars(args.parse_args())["num_games"]
 
-    board_state, board_eval = generate_dataset(data, depth)
+    board_state, board_eval = generate_dataset(data, depth, num_samples, num_games)
     np.savez(processed_data, board_state=board_state, board_eval=board_eval)
 
 if __name__ == "__main__":
