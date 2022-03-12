@@ -2,9 +2,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch import optim, nn
 
-import torch.nn.functional as F
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -31,13 +28,10 @@ class ChessDataset(Dataset):
         return (self.board_state[idx], self.board_eval[idx])
 
 
-#linear layer = dense layer
-# 14 separate channels? one for each matrix/tensor?
 class CNN(nn.Module):
     def __init__(self) -> None:
         super(CNN, self).__init__()
         self.layer1 = nn.Sequential(
-            #nn.Conv2d(8?, 16, kernel_size=3, padding=1),
             nn.Conv2d(14, 16, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(16, 16, kernel_size=3, padding=1),
